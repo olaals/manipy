@@ -7,10 +7,8 @@ def skew3(vec):
     return skew
     
 
-def rodriguez(u_skew):
-    assert u.shape == (3,3)
-    theta = 
-    u_skew = 
+def rodriguez(u_skew, theta):
+    assert u_skew.shape == (3,3)
     rot_mat =  np.identity(3) + u_skew*np.sin(theta) + u_skew@u_skew*(1-np.cos(theta))
     return rot_mat
 
