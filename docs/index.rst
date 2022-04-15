@@ -12,8 +12,10 @@ Welcome to manipy's documentation test!
 
    pages/introduction
    pages/test
+   pages/se3
+   pages/so3
 
-   modules
+
 
 
 Indices and tables

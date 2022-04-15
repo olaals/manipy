@@ -27,6 +27,11 @@ class SE3():
 
     @staticmethod
     def wedge(vec):
+        """SE3 wedge operation
+
+        .. math::
+            \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \end{bmatrix}
+        """
         transl = vec[:3]
         rot = vec[3:6]
         lie_alg = np.array([[ 0,      -rot[2], rot[1], transl[0]],
