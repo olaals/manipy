@@ -1,4 +1,4 @@
-from utils import *
+from .utils import *
 import sys
 from termcolor import colored
 
@@ -6,6 +6,10 @@ class SO3():
     def __init__(self, rot_mat_np=np.identity(3)):
         assert rot_mat_np.shape == (3,3)
         self.mat = rot_mat_np
+
+    def __mul__(self, other):
+        new_rot_mat = self.mat@other.mat
+        return SO3(new_rot_mat)
 
     @staticmethod
     def wedge(vec):
@@ -37,13 +41,6 @@ class SO3():
         axis = vec/angle
         return rodriguez(SO3.wedge(axis), angle)
 
-    def __str__(self):
-        mat = self.mat
-        display_print = f'{mat[0,0]:.3f} {mat[0,1]:.3f} {mat[0,2]:.3f} \n' + \
-                        f'{mat[1,0]:.3f} {mat[1,1]:.3f} {mat[1,2]:.3f} \n' + \
-                        f'{mat[2,0]:.3f} {mat[2,1]:.3f} {mat[2,2]:.3f} \n'
-        display_print = colored(display_print, 'blue')
-        return display_print
 
     @staticmethod
     def log(rot_mat):
@@ -58,6 +55,9 @@ class SO3():
     def Log(rot_mat):
         lie_alg = SO3.log(rot_mat)
         return SO3.vee(lie_alg)
+
+    def adjoint(self):
+        return self.mat
 
     @classmethod
     def from_vec(cls, vec):
@@ -95,6 +95,13 @@ class SO3():
     def shape(self):
         return (3,3)
 
+    def __str__(self):
+        mat = self.mat
+        display_print = f'{mat[0,0]:.3f} {mat[0,1]:.3f} {mat[0,2]:.3f} \n' + \
+                        f'{mat[1,0]:.3f} {mat[1,1]:.3f} {mat[1,2]:.3f} \n' + \
+                        f'{mat[2,0]:.3f} {mat[2,1]:.3f} {mat[2,2]:.3f} \n'
+        display_print = colored(display_print, 'blue')
+        return display_print
 
 
 

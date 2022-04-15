@@ -1,9 +1,14 @@
 import numpy as np
-from utils import rodriguez
-from SO3 import SO3
+from .utils import rodriguez
+from .SO3 import SO3
 from termcolor import colored
 
 class SE3():
+    """A class for operations on transformation matrices
+
+    :param transf_mat_np: A 4 by 4 numpy array
+    :type transf_mat_np: np.ndarray
+    """
     def __init__(self, transf_mat_np=np.identity(4)):
         assert transf_mat_np.shape == (4,4)
         self.t = transf_mat_np[:3,3]
@@ -74,8 +79,29 @@ class SE3():
         vec = np.hstack((t,theta))
         return vec
 
-    def adjoint():
-        pass
+    def adjoint(self):
+        ad = np.zeros((6,6))
+        rot_mat = self.SO3.mat
+        skew_t = SO3.wedge(self.t)
+        ad[:3,:3] = rot_mat
+        ad[:3, 3:6] = skew_t@rot_mat
+        ad[3:6, 3:6] = rot_mat
+        return ad
+
+    def oplus(self, vec):
+        assert vec.shape == (6,)
+        perp = SE3.from_vec(vec)
+        return self*perp
+
+    def oplus_left(self, vec):
+        assert vec.shape == (6,)
+        perp = SE3.from_vec(vec)
+        return perp*self
+
+
+    def __mul__(self, other):
+        new_T = self.mat@other.mat
+        return SE3(new_T)
 
     def left_jacob():
         pass
@@ -110,11 +136,15 @@ class SE3():
         pass
 
     @classmethod
-    def from_SO3(cls):
-        pass
+    def from_SO3(cls, SO3, t=[.0,.0,.0]):
+        t = np.array(t)
+        T = np.identity(4)
+        T[:3,:3] = SO3.mat
+        T[:3,3] = t
+        return cls(T)
 
-    def as_SO3():
-        pass
+    def as_SO3(self):
+        return self.SO3
 
     @classmethod
     def from_SO3_np(cls):
@@ -136,10 +166,15 @@ class SE3():
         pass
 
     @classmethod
-    def from_transl(cls):
-        pass
+    def from_transl(cls, t):
+        T = np.identity(4)
+        T[:3,3] = t
+        return cls(T)
 
-
+    def inv(self):
+        rot = self.SO3.inv()
+        transl = -rot.mat@self.t
+        return SE3.from_SO3(rot, transl)
 
 
     def __str__(self):
@@ -148,12 +183,12 @@ class SE3():
         t_col = 'green'
         r1 = colored(f'{mat[0,0]:.3f} {mat[0,1]:.3f} {mat[0,2]:.3f}', rot_col)
         r2 = colored(f'{mat[1,0]:.3f} {mat[1,1]:.3f} {mat[1,2]:.3f}', rot_col)
-        r3 = colored(f'{mat[3,0]:.3f} {mat[3,1]:.3f} {mat[3,2]:.3f}', rot_col)
+        r3 = colored(f'{mat[2,0]:.3f} {mat[2,1]:.3f} {mat[2,2]:.3f}', rot_col)
         t1 = colored(f'{mat[0,3]:.3f}' , t_col)
         t2 = colored(f'{mat[1,3]:.3f}', t_col)
         t3 = colored(f'{mat[2,3]:.3f}', t_col)
         bot = colored(f'{mat[3,0]:.3f} {mat[3,1]:.3f} {mat[3,2]:.3f} {mat[3,3]:.3f}', 'yellow')
-        display_print = f'{r1} {t1} \n{r2} {t2} \n{r3} {t3} \n{bot}'
+        display_print = f'{r1} {t1} \n{r2} {t2} \n{r3} {t3} \n{bot}\n'
         return display_print
 
     def __getitem__(self, key):

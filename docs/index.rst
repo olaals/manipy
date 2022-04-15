@@ -10,7 +10,10 @@ Welcome to manipy's documentation test!
    :maxdepth: 2
    :caption: Contents:
 
-   test
+   pages/introduction
+   pages/test
+
+   modules
 
 
 Indices and tables
