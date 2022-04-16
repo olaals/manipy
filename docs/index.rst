@@ -11,9 +11,8 @@ Welcome to manipy's documentation test!
    :caption: Contents:
 
    pages/introduction
-   pages/test
-   pages/se3
-   pages/so3
+   pages/user_guide
+   pages/api_doc
 
 
 

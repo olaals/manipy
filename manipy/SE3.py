@@ -93,12 +93,12 @@ class SE3():
         ad[3:6, 3:6] = rot_mat
         return ad
 
-    def oplus(self, vec):
+    def perturb(self, vec):
         assert vec.shape == (6,)
         perp = SE3.from_vec(vec)
         return self*perp
 
-    def oplus_left(self, vec):
+    def perturb_left(self, vec):
         assert vec.shape == (6,)
         perp = SE3.from_vec(vec)
         return perp*self
