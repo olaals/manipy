@@ -21,6 +21,13 @@ class SE3():
         mat[:3, 3] = self.t
         return mat
 
+    @staticmethod
+    def decompose_Rt(se3_mat):
+        assert se3_mat.shape == (4,4)
+        R = se3_mat[0:3,0:3]
+        t = se3_mat[0:3,3]
+        return R, t
+
     @property
     def R(self):
         return self.SO3.mat
@@ -42,28 +49,32 @@ class SE3():
 
     @staticmethod
     def vee(lie_alg):
-        pass
+        assert lie_alg.shape == (4,4)
+        SO3_lie_alg = lie_alg[0:3,0:3]
+        rho = lie_alg[0:3,3]
+        omega = SO3.vee(SO3_lie_alg)
+        return np.concatenate((rho,omega))
 
     @staticmethod
     def exp(lie_alg):
         assert lie_alg.shape == (4,4)
-        u_skew = lie_alg[:3,:3]
-        transl = lie_alg[:3, 3]
-        R = SO3.exp(u_skew)
         transf_mat = np.identity(4)
-        transf_mat[:3,:3] = R
-        transf_mat[:3, 3] = transl
+        u_skew = lie_alg[:3,:3]
+        rho = lie_alg[:3, 3]
+        R = SO3.exp(u_skew)
+        transf_mat[0:3,0:3] = R
+        transf_mat[0:3,3] = SO3.left_jacob(theta) @ rho
         return transf_mat
 
     @staticmethod
     def Exp(vec):
         assert vec.shape == (6,)
-        transl = vec[:3]
-        axang = vec[3:6]
         transf_mat = np.identity(4)
-        R = SO3.Exp(axang)
-        transf_mat[:3,:3] = R
-        transf_mat[:3,3] = transl
+        rho = vec[0:3]
+        theta = vec[3:6]
+        rot_mat = SO3_Exp(theta)
+        transf_mat[0:3,0:3] = rot_mat
+        transf_mat[0:3,3] = SO3.left_jacob(theta) @ rho
         return transf_mat
 
     @staticmethod
@@ -78,11 +89,12 @@ class SE3():
 
     @staticmethod
     def Log(se3_mat):
-        R = se3_mat[:3, :3]
-        t = se3_mat[:3, 3]
+        assert se3_mat.shape == (4,4)
+        R,t = SE3.decompose_Rt(se3_mat)
         theta = SO3.Log(R)
-        vec = np.hstack((t,theta))
-        return vec
+        rho = SO3.inv_left_jacob(theta) @ t
+        rho = np.squeeze(rho)
+        return np.concatenate((rho,theta))
 
     def adjoint(self):
         ad = np.zeros((6,6))
@@ -159,16 +171,19 @@ class SE3():
         pass
 
     @classmethod
-    def from_rx(cls):
-        pass
+    def from_rx(cls, angle, t=[.0,.0,.0]):
+        rot = SO3.from_rx(angle)
+        return cls.from_SO3(rot, t)
 
     @classmethod
     def from_ry(cls):
-        pass
+        rot = SO3.from_ry(angle)
+        return cls.from_SO3(rot, t)
 
     @classmethod
     def from_rz(cls):
-        pass
+        rot = SO3.from_rz(angle)
+        return cls.from_SO3(rot, t)
 
     @classmethod
     def from_transl(cls, t):
@@ -180,6 +195,39 @@ class SE3():
         rot = self.SO3.inv()
         transl = -rot.mat@self.t
         return SE3.from_SO3(rot, transl)
+
+    @staticmethod
+    def jacob_q_term(vec):
+        assert vec.shape == (6,)
+        rho = vec[:3] # rho
+        th = vec[3:] # theta
+        an = np.linalg.norm(th) # angle
+        skew_om = skew(th)
+        skew_rho = skew(rho)
+        cos_an = np.cos(an)
+        sin_an = np.sin(an)
+
+        term1 = 0.5*skew_om
+        term2 = (an - sin_an)/an**3
+        term3 = skew_om @ skew_rho + skew_rho @ skew_om + skew_om @ skew_rho @ skew_om
+        term4 = (1-an**2/2-np.cos(an))/an**4
+        term5 = skew_om@skew_om@skew_rho+skew_rho@skew_om@skew_om-3*skew_om@skew_rho@skew_om
+        term6 = 0.5*((1-an**2/2-cos_an)/(an**4)-3*(an-sin_an-an**3/6)/(an**5))
+        term7 = skew_om@skew_rho@skew_om@skew_om+skew_om@skew_om@skew_rho@skew_om
+        Q = term1 + term2*term3 - term4*term5 - term6*term7
+        return Q
+
+    def left_jacob(self):
+        vec = self.Log(self.mat)
+        omega = vec[3:6]
+        jacob = np.zeros((6,6))
+        SO3_left_jacobian = self.SO3.left_jacob(omega)
+        Q = self.jacob_q_term(vec)
+        
+        jacob[0:3,0:3] = SO3_left_jacobian
+        jacob[0:3,3:] = Q
+        jacob[3:,3:] = SO3_left_jacobian
+        return jacob
 
 
     def __str__(self):

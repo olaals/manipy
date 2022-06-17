@@ -66,6 +66,9 @@ class SO3():
     def as_vec(self):
         return SO3.Log(self.mat)
 
+    def as_logarithm(self):
+        return SO3.log(self.mat)
+
     @classmethod
     def from_np(cls, rot_mat_np):
         return cls(rot_mat_np)
@@ -88,8 +91,60 @@ class SO3():
     def to_euler():
         pass
 
+    @classmethod
+    def from_rx(cls, angle):
+        vec = np.array([angle,0,0])
+        SO3_mat = cls.Exp(vec)
+        return cls(SO3_mat)
+
+    @classmethod
+    def from_ry(cls, angle):
+        vec = np.array([0,angle,0])
+        SO3_mat = cls.Exp(vec)
+        return cls(SO3_mat)
+
+    @classmethod
+    def from_rz(cls, angle):
+        vec = np.array([0,0,angle])
+        SO3_mat = cls.Exp(vec)
+        return cls(SO3_mat)
+
     def __getitem__(self, key):
         return self.mat[key]
+
+    def left_jacob(self):
+        theta_bold = self.Log(self.mat)
+        theta = np.linalg.norm(theta_bold)
+        if np.isclose(theta, 0.0):
+            return np.eye(3) + 0.5 * self.wedge(theta_bold)
+        theta_bold_skew = skew3(theta_bold)
+        term1 = ((theta - np.sin(theta)) / theta**3) * theta_bold_skew @ theta_bold_skew
+        term2 = np.eye(3) + ((1 - np.cos(theta)) / theta**2) * theta_bold_skew
+        return term1 + term2
+
+    def right_jacob(self):
+        theta_bold = self.Log(self.mat)
+        left_jacob = self.left_jacob(theta_bold)
+        right_jacob = left_jacob.T
+        return right_jacob
+
+    def inv_left_jacob(self):
+        theta_bold = SO3.Log(self.mat)
+        theta = np.linalg.norm(theta_bold)
+        if np.isclose(theta, 0.0):
+            return np.eye(3) - 0.5 * self.wedge(theta_bold)
+        theta_bold_skew = skew(theta_bold)
+        fraq_1 = 1 / theta**2
+        fraq_2 = (1 + np.cos(theta)) / (2 * theta * np.sin(theta))
+        term1 = np.eye(3) - 0.5 * theta_bold_skew + (fraq_1 - fraq_2)
+        term2 = theta_bold_skew @ theta_bold_skew
+        return  term1*term2
+
+    def inv_right_jacob(self):
+        theta_bold = self.Log(self.mat)
+        inv_left_jacob = self.inv_left_jacob()
+        inv_right_jacob = inv_left_jacob.T
+        return inv_right_jacob
 
     @property
     def shape(self):

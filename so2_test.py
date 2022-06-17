@@ -1,4 +1,9 @@
-from manipy import SO2
+from manipy import SO3
+import spatialmath as sm
+import math
 
-a = SO2.from_angle(3.14)
+print(sm.SE3.Rx(2))
+
+
+a = SO3.from_Rx(2)
 print(a)
