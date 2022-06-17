@@ -20,16 +20,13 @@ def compare_inv_left_jacob_lie_groups():
     vec = [0.24,0.4,0.3,0.12,0.13,0.16]
     inv_left_jacobian = inv_left_jacob(vec)
     inv_left_jacobian_lg = lg_SE3.inv_left_jacobian(vec)
-    print(inv_left_jacobian)
-    print(inv_left_jacobian_lg)
-
+    assert np.allclose(inv_left_jacobian, inv_left_jacobian_lg)
 
 
 def compare_Exp_lie_groups():
     vec = [0.24,0.4,0.3,0.12,0.13,0.16]
     T = Exp(vec)
     T_lg = lg_SE3.exp(vec)
-    print(T_lg)
     assert np.allclose(T, T_lg)
 
 
@@ -49,9 +46,14 @@ def compare_sm_ry():
 def log_exp():
     theta = [0.24,0.4,0.3,0.12,0.13,0.16]
     theta2 = Log(Exp(theta))
-    print(theta)
-    print(theta2)
     assert np.allclose(theta,theta2)
+
+def jacob_mult_identity():
+    theta = [0.24,0.4,0.3,0.12,0.13,0.16]
+    left_jac = left_jacob(theta)
+    inv_left_jac = inv_left_jacob(theta)
+    assert np.allclose(left_jac@inv_left_jac, np.identity(6))
+
 
 
 
@@ -64,6 +66,7 @@ if __name__ == '__main__':
     compare_left_jacobian_lie_groups()
     compare_inv_left_jacob_lie_groups()
     log_exp()
+    jacob_mult_identity()
 
 
 

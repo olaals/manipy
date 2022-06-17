@@ -67,28 +67,6 @@ def adjoint(se3_mat):
     return ad
 
 
-"""
-def jacob_q_term(vec):
-    vec = np.array(vec)
-    assert vec.shape == (6,)
-    rho = vec[:3] # rho
-    th = vec[3:] # theta
-    an = np.linalg.norm(th) # angle
-    skew_om = skew3(th)
-    skew_rho = skew3(rho)
-    cos_an = np.cos(an)
-    sin_an = np.sin(an)
-
-    term1 = 0.5*skew_om
-    term2 = (an - sin_an)/an**3
-    term3 = skew_om @ skew_rho + skew_rho @ skew_om + skew_om @ skew_rho @ skew_om
-    term4 = (1-an**2/2-np.cos(an))/an**4
-    term5 = skew_om@skew_om@skew_rho+skew_rho@skew_om@skew_om-3*skew_om@skew_rho@skew_om
-    term6 = 0.5*((1-an**2/2-cos_an)/(an**4)-3*(an-sin_an-an**3/6)/(an**5))
-    term7 = skew_om@skew_rho@skew_om@skew_om+skew_om@skew_om@skew_rho@skew_om
-    Q = term1 + term2*term3 - term4*term5 - term6*term7
-    return Q
-"""
 
 def jacob_q_term(vec):
     assert vec.shape == (6,)
@@ -114,6 +92,8 @@ def jacob_q_term(vec):
 def left_jacob(vec):
     vec = np.array(vec)
     assert vec.shape == (6,)
+    if np.isclose(np.linalg.norm(phi), 0.):
+        return np.identity(6) + 0.5 * wedge(vec)
     omega = vec[3:6]
     jacob = np.zeros((6,6))
     SO3_left_jacobian = SO3_ops.left_jacob(omega)
@@ -127,6 +107,8 @@ def left_jacob(vec):
 def inv_left_jacob(vec):
     vec = np.array(vec)
     assert vec.shape == (6,)
+    if np.isclose(np.linalg.norm(vec), 0.):
+        return np.identity(6) # todo: add first order taylor exp
     inv_jacob = np.zeros((6,6))
     theta_bold = vec[3:6]
     SO3_inv_left_jacobian = SO3_ops.inv_left_jacob(theta_bold)

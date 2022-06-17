@@ -42,7 +42,7 @@ def Exp(vec):
     assert vec.shape == (3,)
     angle = np.linalg.norm(vec)
     if np.isclose(angle, 0.):
-        return np.identity(3)+SO3_ops.wedge(vec)
+        return np.identity(3)+wedge(vec)
     axis = vec/angle
     return rodriguez(wedge(axis), angle)
 

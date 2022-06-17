@@ -15,6 +15,10 @@ class SE3():
         self.t = transf_mat_np[:3,3]
         self.SO3 = SO3(transf_mat_np[:3,:3])
 
+    @classmethod
+    def identity(cls):
+        return cls(np.identity(4))
+
     @property 
     def mat(self):
         mat = np.identity(4)
@@ -109,12 +113,12 @@ class SE3():
         return cls.from_SO3(rot, t)
 
     @classmethod
-    def from_ry(cls):
+    def from_ry(cls, angle, t=[.0,.0,.0]):
         rot = SO3.from_ry(angle)
         return cls.from_SO3(rot, t)
 
     @classmethod
-    def from_rz(cls):
+    def from_rz(cls, angle, t=[.0,.0,.0]):
         rot = SO3.from_rz(angle)
         return cls.from_SO3(rot, t)
 
