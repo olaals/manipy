@@ -1,6 +1,7 @@
 from .utils import *
 import sys
 from termcolor import colored
+from . import SO3_ops
 
 class SO3():
     def __init__(self, rot_mat_np=np.identity(3)):
@@ -11,51 +12,6 @@ class SO3():
         new_rot_mat = self.mat@other.mat
         return SO3(new_rot_mat)
 
-    @staticmethod
-    def wedge(vec):
-        vec = np.squeeze(vec)
-        assert vec.shape == (3,)
-        return skew3(vec)
-
-    @staticmethod
-    def vee(lie_alg):
-        assert lie_alg.shape == (3,3)
-        vec = np.zeros((3))
-        vec[0] = lie_alg[2,1]
-        vec[1] = lie_alg[0,2]
-        vec[2] = lie_alg[1,0]
-        return vec
-
-    @staticmethod
-    def exp(lie_alg):
-        assert lie_alg.shape == (3,3)
-        return SO3.Exp(SO3.vee(vec))
-
-    @staticmethod
-    def Exp(vec):
-        vec = np.squeeze(vec)
-        assert vec.shape == (3,)
-        angle = np.linalg.norm(vec)
-        if np.isclose(angle, 0.):
-            return np.identity(3)+SO3.wedge(vec)
-        axis = vec/angle
-        return rodriguez(SO3.wedge(axis), angle)
-
-
-    @staticmethod
-    def log(rot_mat):
-        cosine = np.clip((np.trace(rot_mat) - 1.0)/2.0, -1.0, 1.0)
-        angle = np.arccos(cosine)
-        if np.isclose(angle, 0.):
-            return rot_mat - np.identity(3)
-        lie_alg = (angle/(2*np.sin(angle)))*(rot_mat-rot_mat.transpose())
-        return lie_alg
-    
-    @staticmethod
-    def Log(rot_mat):
-        lie_alg = SO3.log(rot_mat)
-        return SO3.vee(lie_alg)
-
     def adjoint(self):
         return self.mat
 
@@ -64,10 +20,10 @@ class SO3():
         return cls(cls.Exp(vec))
 
     def as_vec(self):
-        return SO3.Log(self.mat)
+        return SO3_ops.Log(self.mat)
 
     def as_logarithm(self):
-        return SO3.log(self.mat)
+        return SO3_ops.log(self.mat)
 
     @classmethod
     def from_np(cls, rot_mat_np):
@@ -94,57 +50,39 @@ class SO3():
     @classmethod
     def from_rx(cls, angle):
         vec = np.array([angle,0,0])
-        SO3_mat = cls.Exp(vec)
+        SO3_mat = SO3_ops.Exp(vec)
         return cls(SO3_mat)
 
     @classmethod
     def from_ry(cls, angle):
         vec = np.array([0,angle,0])
-        SO3_mat = cls.Exp(vec)
+        SO3_mat = SO3_ops.Exp(vec)
         return cls(SO3_mat)
 
     @classmethod
     def from_rz(cls, angle):
         vec = np.array([0,0,angle])
-        SO3_mat = cls.Exp(vec)
+        SO3_mat = SO3_ops.Exp(vec)
         return cls(SO3_mat)
 
     def __getitem__(self, key):
         return self.mat[key]
 
     def left_jacob(self):
-        theta_bold = self.Log(self.mat)
-        theta = np.linalg.norm(theta_bold)
-        if np.isclose(theta, 0.0):
-            return np.eye(3) + 0.5 * self.wedge(theta_bold)
-        theta_bold_skew = skew3(theta_bold)
-        term1 = ((theta - np.sin(theta)) / theta**3) * theta_bold_skew @ theta_bold_skew
-        term2 = np.eye(3) + ((1 - np.cos(theta)) / theta**2) * theta_bold_skew
-        return term1 + term2
+        vec = self.as_vec()
+        return SO3_ops.left_jacob(vec)
 
     def right_jacob(self):
-        theta_bold = self.Log(self.mat)
-        left_jacob = self.left_jacob(theta_bold)
-        right_jacob = left_jacob.T
-        return right_jacob
+        vec = self.as_vec()
+        return SO3_ops.right_jacob(vec)
 
     def inv_left_jacob(self):
-        theta_bold = SO3.Log(self.mat)
-        theta = np.linalg.norm(theta_bold)
-        if np.isclose(theta, 0.0):
-            return np.eye(3) - 0.5 * self.wedge(theta_bold)
-        theta_bold_skew = skew(theta_bold)
-        fraq_1 = 1 / theta**2
-        fraq_2 = (1 + np.cos(theta)) / (2 * theta * np.sin(theta))
-        term1 = np.eye(3) - 0.5 * theta_bold_skew + (fraq_1 - fraq_2)
-        term2 = theta_bold_skew @ theta_bold_skew
-        return  term1*term2
+        vec = self.as_vec()
+        return SO3_ops.inv_left_jacob(vec)
 
     def inv_right_jacob(self):
-        theta_bold = self.Log(self.mat)
-        inv_left_jacob = self.inv_left_jacob()
-        inv_right_jacob = inv_left_jacob.T
-        return inv_right_jacob
+        vec = self.as_vec()
+        return SO3_ops.inv_right_jacob(vec)
 
     @property
     def shape(self):

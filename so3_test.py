@@ -4,17 +4,17 @@ import math
 from liegroups import SO3 as lgSO3
 
 print(sm.SO3.Rx(2))
-print(SO3.from_Rx(2))
+print(SO3.from_rx(2))
 print(sm.SO3.Ry(2))
-print(SO3.from_Ry(2))
+print(SO3.from_ry(2))
 print(sm.SO3.Rz(2))
-print(SO3.from_Rz(2))
+print(SO3.from_rz(2))
 
 print("As logarithm")
-print(SO3.from_Rx(2).as_logarithm())
+print(SO3.from_rx(2).as_logarithm())
 
 lg_rx = lgSO3.rotx(2)
-rx = SO3.from_Rx(2)
+rx = SO3.from_rx(2)
 print(rx)
 print(lg_rx)
 

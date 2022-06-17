@@ -5,31 +5,74 @@ def wedge(vec):
     assert vec.shape == (3,)
     return skew3(vec)
 
-def vee(vec):
-    pass
+def vee(lie_alg):
+    assert lie_alg.shape == (3,3)
+    vec = np.zeros((3))
+    vec[0] = lie_alg[2,1]
+    vec[1] = lie_alg[0,2]
+    vec[2] = lie_alg[1,0]
+    return vec
 
-def log(vec):
-    pass
+def log(rot_mat):
+    cosine = np.clip((np.trace(rot_mat) - 1.0)/2.0, -1.0, 1.0)
+    angle = np.arccos(cosine)
+    if np.isclose(angle, 0.):
+        return rot_mat - np.identity(3)
+    lie_alg = (angle/(2*np.sin(angle)))*(rot_mat-rot_mat.transpose())
+    return lie_alg
 
-def Log(vec):
-    pass
+def Log(rot_mat):
+    lie_alg = log(rot_mat)
+    return vee(lie_alg)
 
 def exp(vec):
-    pass
+    assert lie_alg.shape == (3,3)
+    return Exp(vee(vec))
 
 def Exp(vec):
-    pass
+    vec = np.squeeze(vec)
+    assert vec.shape == (3,)
+    angle = np.linalg.norm(vec)
+    if np.isclose(angle, 0.):
+        return np.identity(3)+SO3.wedge(vec)
+    axis = vec/angle
+    return rodriguez(wedge(axis), angle)
+
+def adjoint(rot_mat):
+    return rot_mat
 
 def left_jacob(vec):
-    pass
+    theta = np.linalg.norm(vec)
+    if np.isclose(theta, 0.0):
+        return np.eye(3) + 0.5 * wedge(vec)
+    theta_bold_skew = skew3(vec)
+    term1 = ((theta - np.sin(theta)) / theta**3) * theta_bold_skew @ theta_bold_skew
+    term2 = np.eye(3) + ((1 - np.cos(theta)) / theta**2) * theta_bold_skew
+    return term1 + term2
+
 
 def right_jacob(vec):
-    pass
+    left_jacob = left_jacob(vec)
+    right_jacob = left_jacob.T
+    return right_jacob
+
 
 def inv_left_jacob(vec):
-    pass
+    theta = np.linalg.norm(vec)
+    if np.isclose(theta, 0.0):
+        return np.eye(3) - 0.5 * wedge(vec)
+    theta_bold_skew = skew3(vec)
+    fraq_1 = 1 / theta**2
+    fraq_2 = (1 + np.cos(theta)) / (2 * theta * np.sin(theta))
+    term1 = np.eye(3) - 0.5 * theta_bold_skew + (fraq_1 - fraq_2)
+    term2 = theta_bold_skew @ theta_bold_skew
+    return  term1*term2
 
 def inv_right_jacob(vec):
-    pass
+    inv_left_jacob = inv_left_jacob(vec)
+    inv_right_jacob = inv_left_jacob.T
+    return inv_right_jacob
+
+
 
 
