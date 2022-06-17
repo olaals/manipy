@@ -8,11 +8,12 @@ def decompose_Rt(se3_mat):
     return R, t
 
 def wedge(vec):
+    vec = np.array(vec)
     assert vec.shape == (6,)
     SE3_lie_alg = np.zeros((4,4))
     rho = vec[0:3]
     theta = vec[3:6]
-    SO3_lie_alg = SO3_wedge(theta)
+    SO3_lie_alg = SO3_ops.wedge(theta)
     SE3_lie_alg[0:3,0:3] = SO3_lie_alg
     SE3_lie_alg[0:3,3] = rho
     return SE3_lie_alg
@@ -25,6 +26,7 @@ def vee(lie_alg):
     return np.concatenate((rho,omega))
 
 def Exp(vec):
+    vec = np.array(vec)
     assert vec.shape == (6,)
     transf_mat = np.identity(4)
     rho = vec[0:3]
@@ -45,10 +47,10 @@ def exp(lie_alg):
     return transf_mat
 
 def Log(se3_mat):
-    assert transf_mat.shape == (4,4)
-    R,t = SE3_decompose(transf_mat)
-    theta = SO3_Log(R)
-    rho = SO3_inv_left_jacob(theta) @ t
+    assert se3_mat.shape == (4,4)
+    R,t = decompose_Rt(se3_mat)
+    theta = SO3_ops.Log(R)
+    rho = SO3_ops.inv_left_jacob(theta) @ t
     rho = np.squeeze(rho)
     return np.concatenate((rho,theta))
 
@@ -64,7 +66,10 @@ def adjoint(se3_mat):
     ad[3:6, 3:6] = rot_mat
     return ad
 
+
+"""
 def jacob_q_term(vec):
+    vec = np.array(vec)
     assert vec.shape == (6,)
     rho = vec[:3] # rho
     th = vec[3:] # theta
@@ -83,9 +88,31 @@ def jacob_q_term(vec):
     term7 = skew_om@skew_rho@skew_om@skew_om+skew_om@skew_om@skew_rho@skew_om
     Q = term1 + term2*term3 - term4*term5 - term6*term7
     return Q
+"""
+
+def jacob_q_term(vec):
+    assert vec.shape == (6,)
+    rho = vec[:3] # rho
+    th = vec[3:] # theta
+    an = np.linalg.norm(th) # angle
+    skew_om = skew3(th)
+    skew_rho = skew3(rho)
+    cos_an = np.cos(an)
+    sin_an = np.sin(an)
+
+    term1 = 0.5*skew_rho
+    term2 = (an - sin_an)/an**3
+    term3 = skew_om @ skew_rho + skew_rho @ skew_om + skew_om @ skew_rho @ skew_om
+    term4 = (1-an**2/2-np.cos(an))/an**4
+    term5 = skew_om@skew_om@skew_rho+skew_rho@skew_om@skew_om-3*skew_om@skew_rho@skew_om
+    term6 = 0.5*((1-an**2/2-cos_an)/(an**4)-3*(an-sin_an-an**3/6)/(an**5))
+    term7 = skew_om@skew_rho@skew_om@skew_om+skew_om@skew_om@skew_rho@skew_om
+    Q = term1 + term2*term3 - term4*term5 - term6*term7
+    return Q
 
 
 def left_jacob(vec):
+    vec = np.array(vec)
     assert vec.shape == (6,)
     omega = vec[3:6]
     jacob = np.zeros((6,6))
@@ -98,6 +125,7 @@ def left_jacob(vec):
 
 
 def inv_left_jacob(vec):
+    vec = np.array(vec)
     assert vec.shape == (6,)
     inv_jacob = np.zeros((6,6))
     theta_bold = vec[3:6]
@@ -109,6 +137,7 @@ def inv_left_jacob(vec):
     return inv_jacob
 
 def inv_right_jacob(vec):
+    vec = np.array(vec)
     assert vec.shape == (6,)
     return inv_left_jacob(-vec)
 

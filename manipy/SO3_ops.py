@@ -22,8 +22,16 @@ def log(rot_mat):
     return lie_alg
 
 def Log(rot_mat):
-    lie_alg = log(rot_mat)
-    return vee(lie_alg)
+    assert rot_mat.shape == (3,3)
+    cos_theta = (np.trace(rot_mat) - 1) / 2
+    cos_upper_lim = 1.0
+    cos_lower_lim = -1.0
+    cos_theta = np.clip(cos_theta, cos_lower_lim, cos_upper_lim)
+    theta = np.arccos(cos_theta)
+    if np.isclose(theta, 0.0):
+        return SO3_vee(rot_mat - np.eye(3))
+    return (theta / (2 * np.sin(theta))) * vee(rot_mat - rot_mat.T)
+
 
 def exp(vec):
     assert lie_alg.shape == (3,3)
@@ -34,7 +42,7 @@ def Exp(vec):
     assert vec.shape == (3,)
     angle = np.linalg.norm(vec)
     if np.isclose(angle, 0.):
-        return np.identity(3)+SO3.wedge(vec)
+        return np.identity(3)+SO3_ops.wedge(vec)
     axis = vec/angle
     return rodriguez(wedge(axis), angle)
 
@@ -64,9 +72,9 @@ def inv_left_jacob(vec):
     theta_bold_skew = skew3(vec)
     fraq_1 = 1 / theta**2
     fraq_2 = (1 + np.cos(theta)) / (2 * theta * np.sin(theta))
-    term1 = np.eye(3) - 0.5 * theta_bold_skew + (fraq_1 - fraq_2)
-    term2 = theta_bold_skew @ theta_bold_skew
-    return  term1*term2
+    term1 = np.eye(3) - 0.5 * theta_bold_skew
+    term2 = (fraq_1 - fraq_2) * theta_bold_skew @ theta_bold_skew
+    return  term1 + term2
 
 def inv_right_jacob(vec):
     inv_left_jacob = inv_left_jacob(vec)
