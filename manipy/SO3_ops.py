@@ -29,7 +29,7 @@ def Log(rot_mat):
     cos_theta = np.clip(cos_theta, cos_lower_lim, cos_upper_lim)
     theta = np.arccos(cos_theta)
     if np.isclose(theta, 0.0):
-        return SO3_vee(rot_mat - np.eye(3))
+        return vee(rot_mat - np.eye(3))
     return (theta / (2 * np.sin(theta))) * vee(rot_mat - rot_mat.T)
 
 
