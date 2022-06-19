@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 
 def constant_velocity(_, __):
-    vec = SE3.from_rz(math.pi, t=[0.1,0,0]).as_vec()
+    vec = SE3.from_rz(math.pi/1000.0, t=[0.1,0,0]).as_vec()
     return vec
 
 def time_var_velocity(_, t):
@@ -160,8 +160,8 @@ def RKMK4(steps, kinematics):
 
 
 if __name__ == '__main__':
-    #kinematics = constant_velocity
-    kinematics = time_var_velocity
+    kinematics = constant_velocity
+    #kinematics = time_var_velocity
     #kinematics = time_and_space_var_velocity
 
     RKMK1_steps = 6
