@@ -31,13 +31,7 @@ class SE3():
         return self.SO3.mat
 
     def adjoint(self):
-        ad = np.zeros((6,6))
-        rot_mat = self.SO3.mat
-        skew_t = SO3.wedge(self.t)
-        ad[:3,:3] = rot_mat
-        ad[:3, 3:6] = skew_t@rot_mat
-        ad[3:6, 3:6] = rot_mat
-        return ad
+        return SE3_ops.adjoint(self.mat)
 
     def perturb(self, vec):
         assert vec.shape == (6,)

@@ -60,7 +60,7 @@ def log(se3_mat):
 def adjoint(se3_mat):
     ad = np.zeros((6,6))
     rot_mat, transl = decompose_Rt(se3_mat)
-    skew_t = SO3.wedge(transl)
+    skew_t = SO3_ops.wedge(transl)
     ad[:3,:3] = rot_mat
     ad[:3, 3:6] = skew_t@rot_mat
     ad[3:6, 3:6] = rot_mat
@@ -92,9 +92,10 @@ def jacob_q_term(vec):
 def left_jacob(vec):
     vec = np.array(vec)
     assert vec.shape == (6,)
-    if np.isclose(np.linalg.norm(phi), 0.):
-        return np.identity(6) + 0.5 * wedge(vec)
+    if np.isclose(np.linalg.norm(vec), 0.):
+        return np.identity(6) #+ 0.5 * wedge(vec)
     omega = vec[3:6]
+
     jacob = np.zeros((6,6))
     SO3_left_jacobian = SO3_ops.left_jacob(omega)
     Q = jacob_q_term(vec)
@@ -117,6 +118,9 @@ def inv_left_jacob(vec):
     inv_jacob[0:3,3:] = -SO3_inv_left_jacobian@Q@SO3_inv_left_jacobian
     inv_jacob[3:,3:] = SO3_inv_left_jacobian
     return inv_jacob
+
+def right_jacob(vec):
+    return left_jacob(-vec)
 
 def inv_right_jacob(vec):
     vec = np.array(vec)

@@ -104,9 +104,9 @@ def plot_time_varying():
     rk4_btab = get_rk4_butcher()
 
     steps = 12
-    gt_steps = 100
+    gt_steps = 1000
 
-    RKMK(gt_steps, kinematics, SIM_DUR, rk4_btab)
+    RKMK(gt_steps, kinematics, SIM_DUR, rk1_btab)
     RKMK(steps, kinematics, SIM_DUR, rk1_btab)
     RKMK(steps, kinematics, SIM_DUR, rk2_btab)
     RKMK(steps, kinematics, SIM_DUR, rk4_btab)
@@ -119,6 +119,9 @@ def plot_time_varying():
         f'RKMK4 {steps} steps',
     ]
     plt.legend(labels)
+    plt.title('Time varying velocity')
+    plt.xlabel('x')
+    plt.ylabel('y')
 
     plt.show()
 
@@ -132,7 +135,7 @@ def plot_constant_vel():
     steps = 10
     gt_steps = 100
 
-    RKMK(gt_steps, kinematics, SIM_DUR, rk4_btab)
+    RKMK(gt_steps, kinematics, SIM_DUR, rk1_btab)
     RKMK(steps, kinematics, SIM_DUR, rk1_btab)
     RKMK(steps, kinematics, SIM_DUR, rk2_btab)
     RKMK(steps, kinematics, SIM_DUR, rk4_btab)
@@ -144,7 +147,10 @@ def plot_constant_vel():
         f'RKMK2 {steps} steps',
         f'RKMK4 {steps} steps',
     ]
+    plt.xlabel('x')
+    plt.ylabel('y')
     plt.legend(labels)
+    plt.title('Constant velocity')
 
     plt.show()
 
