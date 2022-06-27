@@ -5,7 +5,10 @@ def skew3(vec):
                     [ vec[2], 0,       -vec[0]],
                     [-vec[1], vec[0],  0      ]])
     return skew
-    
+
+def skew2(x):
+    skew = np.array([[0, -x],[x,0]])
+    return skew
 
 def rodriguez(u_skew, theta):
     assert u_skew.shape == (3,3)
